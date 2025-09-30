@@ -1,208 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>FluxifyTabKit</title>
-  <style>
-    body {
-      font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-      background: #0f0f0f;
-      color: #e0e0e0;
-      line-height: 1.6;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      color: #00ffdd;
-      text-shadow: 0 0 8px #00ffdd;
-    }
-    p {
-      margin-bottom: 1.5rem;
-      color: #a0a0a0;
-    }
-    .bookmarklet-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    a.bookmarklet {
-      position: relative;
-      display: inline-block;
-      padding: 0.75rem 1.25rem;
-      background: #1f1f1f;
-      color: #00ff99;
-      border: 1px solid #00ff99;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-    a.bookmarklet:hover {
-      background: #00ff99;
-      color: #0f0f0f;
-    }
+<meta charset="UTF-8">
+<title>FluxifyTabKit</title>
+<style>
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2rem;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    line-height: 1.6;
+  }
+  h1 { font-size: 2rem; margin-bottom: 1rem; color: #00ffdd; text-shadow: 0 0 8px #00ffdd; }
+  p { margin-bottom: 1.5rem; color: #a0a0a0; }
+  .bookmarklet-list { display: flex; flex-wrap: wrap; gap: 1rem; }
+  a.bookmarklet {
+    display: inline-block; padding: 0.75rem 1.25rem;
+    background: #1f1f1f; color: #00ff99; border: 1px solid #00ff99;
+    border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s;
+    position: relative; /* needed for tooltip */
+  }
+  a.bookmarklet:hover { background: #00ff99; color: #0f0f0f; }
 
-    /* Tooltip styling */
-    .tooltip {
-      visibility: hidden;
-      opacity: 0;
-      background: #222;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 6px 10px;
-      position: absolute;
-      bottom: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      white-space: nowrap;
-      font-size: 0.85rem;
-      box-shadow: 0 0 6px rgba(0,0,0,0.6);
-      transition: opacity 0.25s;
-      z-index: 10;
-    }
-    .tooltip::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      margin-left: -6px;
-      border-width: 6px;
-      border-style: solid;
-      border-color: #222 transparent transparent transparent;
-    }
-    a.bookmarklet:hover .tooltip,
-    a.bookmarklet.active .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
+  /* Tooltip styles */
+  a.bookmarklet::after {
+    content: attr(data-desc);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: #00ff99;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1000;
+  }
+  a.bookmarklet::before {
+    content: "";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1000;
+  }
+  a.bookmarklet:hover::after,
+  a.bookmarklet:hover::before,
+  a.bookmarklet.show-tooltip::after,
+  a.bookmarklet.show-tooltip::before {
+    opacity: 1;
+  }
 
-    footer {
-      margin-top: 3rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
+  footer { margin-top: 3rem; font-size: 0.9rem; color: #555; }
 
-    /* Disclaimer popup */
-    #disclaimerPopup {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1a1a1a;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8);
-      z-index: 1000;
-      width: 350px;
-      text-align: center;
-    }
-    #disclaimerPopup h2 {
-      margin-top: 0;
-      color: #ffcc00;
-    }
-    #disclaimerPopup button {
-      margin: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: #00ff99;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    #disclaimerPopup button:hover {
-      background: #00cc77;
-    }
-    #overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 999;
-    }
-    .checkbox {
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      color: #ccc;
-    }
-  </style>
+  /* Modal styles */
+  #disclaimerModal {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center;
+    z-index: 1000; display:none;
+  }
+  #disclaimerContent {
+    background:#1a1a1a; padding:2rem; border-radius:8px; max-width:400px;
+    text-align:center; color:#fff; line-height:1.5;
+    border:2px solid #00ffdd;
+    box-shadow:0 0 20px #00ffdd, 0 0 40px #00ffaa;
+    animation: flicker 2.5s infinite;
+  }
+  #disclaimerContent h2 {
+    font-size:1.5rem;
+    color:#ff4444;
+    text-shadow:0 0 5px #ff4444, 0 0 10px #ff0000, 2px 2px #000;
+    position:relative;
+    animation: glitch 1.5s infinite;
+    margin-bottom:1rem;
+  }
+  #disclaimerContent a, #disclaimerContent button { 
+    display:inline-block; margin:0.5rem; padding:0.5rem 1rem;
+    background:#00ff99; color:#0f0f0f; border:none; border-radius:6px; text-decoration:none;
+    cursor:pointer; font-weight:bold; box-shadow:0 0 10px #00ff99, 0 0 20px #00ffaa;
+  }
+  #disclaimerContent a:hover, #disclaimerContent button:hover { 
+    background:#0f0f0f; color:#00ff99; border:1px solid #00ff99; text-shadow:0 0 8px #00ffaa;
+  }
+  #disclaimerContent label { display:block; margin-top:1rem; font-size:0.9rem; cursor:pointer; }
+
+  /* Animations */
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {opacity:1;}
+    20%, 24%, 55% {opacity:0.85;}
+    22% {opacity:0.4;}
+  }
+  @keyframes glitch {
+    0% {text-shadow:2px 0 red, -2px 0 cyan;}
+    20% {text-shadow:-2px 0 red, 2px 0 cyan;}
+    40% {text-shadow:2px 2px red, -2px -2px cyan;}
+    60% {text-shadow:-2px -2px red, 2px 2px cyan;}
+    80% {text-shadow:0 0 5px #ff0000, 0 0 10px #00ffff;}
+    100% {text-shadow:2px 0 red, -2px 0 cyan;}
+  }
+</style>
 </head>
 <body>
-  <h1>⚡ Fluxify</h1>
-  <p>Drag these buttons into your bookmarks bar to access your secret tools:</p>
-  <div class="bookmarklet-list">
-    <a class="bookmarklet" href="javascript:(function(){alert('Hello from Fluxify!')})();">
-      Hello Alert
-      <span class="tooltip">Shows a popup saying hello</span>
-    </a>
-    <a class="bookmarklet" href="javascript:(function(){document.body.style.color='lime'})();">
-      Green Text
-      <span class="tooltip">Turns all text on the page lime green</span>
-    </a>
-    <a class="bookmarklet" href="javascript:(function(){prompt('Type something for Fluxify:')})();">
-      Prompt Box
-      <span class="tooltip">Asks you to type a custom message</span>
-    </a>
-    <a class="bookmarklet" href="javascript:(function(){window.open('https://example.com')})();">
-      Open Example.com
-      <span class="tooltip">Opens example.com in a new tab</span>
-    </a>
+
+<h1>⚡ Fluxify</h1>
+<p>Paste these bookmarklets into your bookmarks bar to access your secret tools:</p>
+<div class="bookmarklet-list">
+  <a class="bookmarklet" href="javascript:..." data-desc="Redirects and clears history">redirect button and history clear</a>
+  <a class="bookmarklet" href="javascript:..." data-desc="Changes background color to purple">Purple Background</a>
+  <a class="bookmarklet" href="javascript:..." data-desc="Opens a prompt box for input">Prompt Box</a>
+  <a class="bookmarklet" href="javascript:..." data-desc="Opens example.com in a new tab">Open Example.com</a>
+</div>
+
+<footer>
+  <p>FluxifyTabKit — subtle tools, unmistakable results ⚡</p>
+</footer>
+
+<!-- Modal -->
+<div id="disclaimerModal">
+  <div id="disclaimerContent">
+    <h2>⚠ Disclaimer</h2>
+    <p>These tools use logging systems to better understand school restrictions. By continuing you agree you have read and understand our full disclaimer.</p>
+    <a href="disclaimer.html" target="_blank">Read Full Disclaimer</a>
+    <button id="agreeBtn">I Agree</button>
+    <label><input type="checkbox" id="dontShow"> Don't show me again</label>
   </div>
+</div>
 
-  <footer>
-    <p>FluxifyTabKit — subtle tools, unmistakible results ⚡</p>
-  </footer>
+<script>
+  const modal = document.getElementById('disclaimerModal');
+  const agreeBtn = document.getElementById('agreeBtn');
+  const dontShow = document.getElementById('dontShow');
 
-  <!-- Disclaimer Popup -->
-  <div id="overlay"></div>
-  <div id="disclaimerPopup">
-    <h2>Disclaimer</h2>
-    <p>This kit is for fun utilities only. <a href="disclaimer.html" target="_blank">Read full disclaimer</a>.</p>
-    <div class="checkbox">
-      <input type="checkbox" id="dontShow"> <label for="dontShow">Don’t show me again</label>
-    </div>
-    <div>
-      <button onclick="agreeDisclaimer()">I Agree</button>
-    </div>
-  </div>
+  // Show modal if not already agreed
+  if(!localStorage.getItem('fluxify_disclaimer')) {
+    modal.style.display = 'flex';
+  }
 
-  <script>
-    const popup = document.getElementById('disclaimerPopup');
-    const overlay = document.getElementById('overlay');
-    const dontShow = document.getElementById('dontShow');
+  agreeBtn.addEventListener('click', () => {
+    if(dontShow.checked) localStorage.setItem('fluxify_disclaimer', 'ack');
+    modal.style.display = 'none';
+  });
 
-    function showDisclaimer() {
-      if (localStorage.getItem('disclaimerAgreed') === 'true') return;
-      popup.style.display = 'block';
-      overlay.style.display = 'block';
-    }
+  // Tap support for iPad: show tooltip on touch
+  document.querySelectorAll('.bookmarklet').forEach(b => {
+    b.addEventListener('touchstart', () => b.classList.add('show-tooltip'));
+    b.addEventListener('touchend', () => b.classList.remove('show-tooltip'));
+  });
+</script>
 
-    function agreeDisclaimer() {
-      if (dontShow.checked) {
-        localStorage.setItem('disclaimerAgreed', 'true');
-      }
-      popup.style.display = 'none';
-      overlay.style.display = 'none';
-    }
-
-    window.onload = showDisclaimer;
-
-    // Mobile/iPad tooltip support: tap once to show tooltip, tap again to follow link
-    document.querySelectorAll('.bookmarklet').forEach(link => {
-      link.addEventListener('touchstart', function(e) {
-        if (!this.classList.contains('active')) {
-          e.preventDefault(); // stop link from firing
-          document.querySelectorAll('.bookmarklet').forEach(l => l.classList.remove('active'));
-          this.classList.add('active'); // show tooltip
-        }
-      });
-    });
-  </script>
 </body>
 </html>

@@ -106,6 +106,27 @@
     80% {text-shadow:0 0 5px #ff0000, 0 0 10px #00ffff;}
     100% {text-shadow:2px 0 red, -2px 0 cyan;}
   }
+  <div id="copiedPopup">Copied!</div>
+#copiedPopup {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #00ff99;
+  color: #0f0f0f;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: bold;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 2000;
+}
+#copiedPopup.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
 </style>
 </head>
 <body>
@@ -138,6 +159,19 @@
   const modal = document.getElementById('disclaimerModal');
   const agreeBtn = document.getElementById('agreeBtn');
   const dontShow = document.getElementById('dontShow');
+
+  document.querySelectorAll('.bookmarklet').forEach(b => {
+  b.addEventListener('click', e => {
+    e.preventDefault(); // Prevent default bookmarklet execution
+    
+    const code = b.getAttribute('href');
+    navigator.clipboard.writeText(code).then(() => {
+      const popup = document.getElementById('copiedPopup');
+      popup.classList.add('show');
+      setTimeout(() => popup.classList.remove('show'), 1000); // hide after 1s
+    }).catch(err => console.error('Copy failed', err));
+  });
+});
 
   // Show modal if not already agreed
   if(!localStorage.getItem('fluxify_disclaimer')) {

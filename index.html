@@ -71,8 +71,7 @@
   #disclaimerContent {
     background:#1a1a1a; padding:2rem; border-radius:8px; max-width:400px;
     text-align:center; color:#fff; line-height:1.5;
-    border:2px solid #00ffdd;
-    box-shadow:0 0 20px #00ffdd, 0 0 40px #00ffaa;
+    /* Removed border and box-shadow to get rid of cyan outline */
     animation: flicker 2.5s infinite;
   }
   #disclaimerContent h2 {
@@ -86,7 +85,7 @@
   #disclaimerContent a, #disclaimerContent button { 
     display:inline-block; margin:0.5rem; padding:0.5rem 1rem;
     background:#00ff99; color:#0f0f0f; border:none; border-radius:6px; text-decoration:none;
-    cursor:pointer; font-weight:bold; box-shadow:0 0 10px #00ff99, 0 0 20px #00ffaa;
+    cursor:pointer; font-weight:bold;
   }
   #disclaimerContent a:hover, #disclaimerContent button:hover { 
     background:#0f0f0f; color:#00ff99; border:1px solid #00ff99; text-shadow:0 0 8px #00ffaa;
@@ -116,7 +115,7 @@
 <div class="bookmarklet-list">
   <a class="bookmarklet" href="javascript:..." data-desc="Redirects and clears history">redirect button and history clear</a>
   <a class="bookmarklet" href="javascript:..." data-desc="Changes background color to purple">Purple Background</a>
-  <a class="bookmarklet" href="javascript:..." data-desc="Opens a prompt box for input">Prompt Box</a>
+  <a class="bookmarklet" href="javascript:(function(){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/asteroids/0.0.1/asteroids.min.js';document.body.appendChild(s);})();" data-desc="Classic Asteroids game in your browser">Asteroids Game</a>
   <a class="bookmarklet" href="javascript:..." data-desc="Opens example.com in a new tab">Open Example.com</a>
 </div>
 

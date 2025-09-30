@@ -1,72 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>FluxifyTabKit</title>
-<style>
-  body {
-    font-family: 'Courier New', Courier, monospace;
-    padding: 2rem;
-    background: #0f0f0f;
-    color: #e0e0e0;
-    line-height: 1.6;
-  }
-  h1 { font-size: 2rem; margin-bottom: 1rem; color: #00ffdd; text-shadow: 0 0 8px #00ffdd; }
-  p { margin-bottom: 1.5rem; color: #a0a0a0; }
-  .bookmarklet-list { display: flex; flex-wrap: wrap; gap: 1rem; }
-  a.bookmarklet {
-    display: inline-block; padding: 0.75rem 1.25rem;
-    background: #1f1f1f; color: #00ff99; border: 1px solid #00ff99;
-    border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s;
-  }
-  a.bookmarklet:hover { background: #00ff99; color: #0f0f0f; }
-  footer { margin-top: 3rem; font-size: 0.9rem; color: #555; }
-
-  /* Modal styles */
-  #disclaimerModal {
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center;
-    z-index: 1000; display:none;
-  }
-  #disclaimerContent {
-    background:#1a1a1a; padding:2rem; border-radius:8px; max-width:400px;
-    text-align:center; color:#fff; line-height:1.5;
-  }
-  #disclaimerContent h2 { color:#ff4444; margin-bottom:1rem; }
-  #disclaimerContent a, #disclaimerContent button { 
-    display:inline-block; margin:0.5rem; padding:0.5rem 1rem;
-    background:#00ff99; color:#0f0f0f; border:none; border-radius:6px; text-decoration:none;
-    cursor:pointer;
-  }
-  #disclaimerContent a:hover, #disclaimerContent button:hover { background:#0f0f0f; color:#00ff99; border:1px solid #00ff99; }
-  #disclaimerContent label { display:block; margin-top:1rem; font-size:0.9rem; cursor:pointer; }
-</style>
-</head>
-<body>
-
-<h1>⚡ Fluxify</h1>
-<p>Drag these buttons into your bookmarks bar to access your secret tools:</p>
-<div class="bookmarklet-list">
-  <a class="bookmarklet" href="javascript:(function(){alert('Hello from Fluxify!')})();">Hello Alert</a>
-  <a class="bookmarklet" href="javascript:(function(){document.body.style.background='purple'})();">Purple Background</a>
-  <a class="bookmarklet" href="javascript:(function(){prompt('Type something for Fluxify:')})();">Prompt Box</a>
-  <a class="bookmarklet" href="javascript:(function(){window.open('https://example.com')})();">Open Example.com</a>
-</div>
-
-<footer>
-  <p>FluxifyTabKit — subtle tools, unmistakable results ⚡</p>
-</footer>
-
 <!-- Modal -->
 <div id="disclaimerModal">
   <div id="disclaimerContent">
-    <h2>⚠ Disclaimer </h2>
-    <p>These tools are use logging systems to better understand school restrictions. </p>
+    <h2>⚠ Disclaimer Preview</h2>
+    <p>These tools are experimental and use logging features to better understand school security systems</p>
     <a href="disclaimer.html" target="_blank">Read Full Disclaimer</a>
     <button id="agreeBtn">I Agree</button>
     <label><input type="checkbox" id="dontShow"> Don't show me again</label>
   </div>
 </div>
+
+<style>
+  /* Modal backdrop */
+  #disclaimerModal {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.9);
+    display:flex; justify-content:center; align-items:center;
+    z-index: 1000; display:none;
+  }
+
+  /* Modal box */
+  #disclaimerContent {
+    background:#0f0f0f;
+    padding:2rem;
+    border-radius:12px;
+    max-width:420px;
+    text-align:center;
+    color:#fff;
+    border:2px solid #00ffdd;
+    box-shadow:0 0 20px #00ffdd, 0 0 40px #00ffaa;
+    animation: flicker 2.5s infinite;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Header glitch effect */
+  #disclaimerContent h2 {
+    font-size:1.5rem;
+    color:#ff4444;
+    text-shadow:0 0 5px #ff4444, 0 0 10px #ff0000, 2px 2px #000;
+    position:relative;
+    animation: glitch 1.5s infinite;
+  }
+
+  /* Buttons + links */
+  #disclaimerContent a,
+  #disclaimerContent button {
+    display:inline-block;
+    margin:0.5rem;
+    padding:0.6rem 1.2rem;
+    background:#00ff99;
+    color:#0f0f0f;
+    border:none;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+    transition:all 0.2s;
+    box-shadow:0 0 10px #00ff99, 0 0 20px #00ffaa;
+  }
+  #disclaimerContent a:hover,
+  #disclaimerContent button:hover {
+    background:#0f0f0f;
+    color:#00ff99;
+    border:1px solid #00ff99;
+    text-shadow:0 0 8px #00ffaa;
+  }
+
+  /* Checkbox label */
+  #disclaimerContent label {
+    display:block;
+    margin-top:1rem;
+    font-size:0.85rem;
+    color:#aaa;
+    cursor:pointer;
+  }
+
+  /* Flicker animation */
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {opacity:1;}
+    20%, 24%, 55% {opacity:0.85;}
+    22% {opacity:0.4;}
+  }
+
+  /* Glitch animation */
+  @keyframes glitch {
+    0% {text-shadow:2px 0 red, -2px 0 cyan;}
+    20% {text-shadow:-2px 0 red, 2px 0 cyan;}
+    40% {text-shadow:2px 2px red, -2px -2px cyan;}
+    60% {text-shadow:-2px -2px red, 2px 2px cyan;}
+    80% {text-shadow:0 0 5px #ff0000, 0 0 10px #00ffff;}
+    100% {text-shadow:2px 0 red, -2px 0 cyan;}
+  }
+</style>
 
 <script>
   const modal = document.getElementById('disclaimerModal');
@@ -83,6 +106,3 @@
     modal.style.display = 'none';
   });
 </script>
-
-</body>
-</html>

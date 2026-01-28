@@ -231,7 +231,7 @@
     return fetch(url, o).finally(() => clearTimeout(timer));
   }
 
-  // ------- New: account / claimed chats helpers used by client -------
+  // ------- Account & claim helpers used by client -------
   async function fetchUserRoomPasswords(token) {
     if (!token) return {};
     try {
@@ -343,7 +343,7 @@
     }
   }
 
-  // NEW: Request a short-lived proof from account worker for this room
+  // Request a short-lived proof from account worker for this room
   async function fetchRoomProof(token, room) {
     try {
       const cached = roomProofs[room];
@@ -365,6 +365,24 @@
     } catch (e) {
       console.debug("fetchRoomProof error:", e);
       return null;
+    }
+  }
+
+  // Fetch explore list
+  async function fetchExplore(limit = 20, sort = "last_activity", q = "") {
+    try {
+      const url = new URL(`${ACCOUNT_BASE}/explore`);
+      url.searchParams.set("limit", String(limit));
+      url.searchParams.set("sort", sort);
+      if (q) url.searchParams.set("q", q);
+      const res = await fetchWithTimeout(url.toString(), {}, 8000);
+      if (!res.ok) return [];
+      const j = await res.json().catch(() => null);
+      if (!j || !j.success || !Array.isArray(j.rooms)) return [];
+      return j.rooms;
+    } catch (e) {
+      console.debug("fetchExplore error:", e);
+      return [];
     }
   }
 
@@ -559,7 +577,7 @@
   document.getElementById("loginBtn").onclick = login;
   document.getElementById("createBtn").onclick = createAccount;
 
-  // --- Main: initChat with claiming/password/proof UX additions ---
+  // --- Main: initChat with claiming/password/proof/explore UX additions ---
   async function initChat(token, username) {
     // Preload account-saved passwords and claimed-chats
     userRoomPasswords = await fetchUserRoomPasswords(token);
@@ -573,40 +591,51 @@
       right: "20px",
       width: "min(95vw, 360px)",
       height: "min(80vh, 600px)",
-      background: "#2c2f33",
+      background: "#18191c",
       color: "#ffffff",
       zIndex: 999999,
       borderRadius: "12px",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
-      fontFamily: "Arial, sans-serif",
-      boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+      fontFamily: "Inter, Arial, sans-serif",
+      boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
+      border: "1px solid rgba(255,255,255,0.03)"
     });
 
     box.innerHTML = `
-      <div style="padding:12px; background:#23272a; font-weight:bold; text-align:center; position:relative; font-size:16px;">
-        <button id="minifyChat" title="Minify" style="position:absolute; left:10px; top:8px; background:#999; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:15px;">_</button>
-        Friends Chat (<span id="book_username"></span>)
-        <button id="closeChat" style="position:absolute; right:10px; top:8px; background:red; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:15px;">X</button>
-
-        <!-- Room button opens overlay -->
-        <div style="margin-top:8px; display:flex; gap:8px; justify-content:center; align-items:center;">
-          <button id="openRoomsBtn" style="padding:6px 10px; border-radius:8px; border:none; background:#43b581; color:white; cursor:pointer; font-size:13px;">Room</button>
-          <div id="currentRoomDisplay" style="font-size:13px; opacity:0.9; color:#ddd;">room: ${currentRoom}</div>
+      <div id="chatHeader" style="padding:12px; background:linear-gradient(180deg,#111214,#17181b); font-weight:600; text-align:center; position:relative; font-size:15px; display:flex; align-items:center; justify-content:center; gap:10px;">
+        <div style="display:flex; gap:8px; align-items:center; position:absolute; left:12px;">
+          <button id="minifyChat" title="Minify" style="background:transparent; border:none; color:#bfc7ff; padding:6px; border-radius:8px; cursor:pointer;">_</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div style="font-weight:700; color:#e6eefc;">Friends Chat</div>
+          <div id="book_username" style="font-weight:500; color:#9fb0e6; opacity:0.9;"></div>
+        </div>
+        <div style="position:absolute; right:12px; display:flex; gap:8px; align-items:center;">
+          <button id="closeChat" style="background:#ff6b6b; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:13px;">Close</button>
         </div>
       </div>
-      <div id="chatMessages" style="flex:1; padding:10px; overflow-y:auto; background:#2c2f33; display:flex; flex-direction: column; gap:8px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:auto; position:relative;"></div>
-      <div id="imageInputRow" style="display:none; padding:8px 10px; background:#242528; gap:8px; align-items:center;">
-        <input id="imageUrlInput" placeholder="Paste image URL (png/jpg/gif/webp...)" style="flex:1; padding:8px; border-radius:8px; border:none; outline:none; font-size:14px;">
-        <button id="imageUrlSend" style="padding:8px 10px; border-radius:8px; border:none; background:#43b581; color:white; cursor:pointer; font-size:14px;">Send</button>
-        <button id="imageUploadBtn" style="padding:8px 10px; border-radius:8px; border:none; background:#5865f2; color:white; cursor:pointer; font-size:14px;">Upload</button>
-        <button id="imageUrlCancel" style="padding:8px 10px; border-radius:8px; border:none; background:#999; color:white; cursor:pointer; font-size:14px;">Cancel</button>
+
+      <div style="padding:10px; display:flex; gap:8px; align-items:center; background:#141518; border-bottom:1px solid rgba(255,255,255,0.02);">
+        <button id="openRoomsBtn" style="padding:8px 12px; border-radius:10px; border:none; background:#2f855a; color:white; cursor:pointer; font-size:13px;">Room</button>
+        <button id="openExploreBtn" style="padding:8px 12px; border-radius:10px; border:none; background:#2b6cb0; color:white; cursor:pointer; font-size:13px;">Explore</button>
+        <div id="currentRoomDisplay" style="font-size:13px; opacity:0.9; color:#ddd; margin-left:auto;">room: ${currentRoom}</div>
       </div>
-      <div style="padding:10px; background:#23272a; display:flex; gap:8px; align-items:center;">
-        <button id="imageBtn" title="Add image" style="padding:8px 10px; border-radius:8px; border:none; background:#5865f2; color:white; cursor:pointer; font-size:16px;">🖼️</button>
-        <input id="chatInput" style="flex:1; padding:12px; border-radius:10px; border:none; outline:none; font-size:16px;" placeholder="Type a message...">
-        <button id="chatSend" style="padding:10px 14px; border-radius:10px; border:none; background:#7289da; color:white; cursor:pointer; font-size:16px;">Send</button>
+
+      <div id="chatMessages" style="flex:1; padding:12px; overflow-y:auto; background:linear-gradient(180deg,#0f1113,#141518); display:flex; flex-direction: column; gap:8px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:auto; position:relative;"></div>
+
+      <div id="imageInputRow" style="display:none; padding:8px 10px; background:#0f1113; gap:8px; align-items:center;">
+        <input id="imageUrlInput" placeholder="Paste image URL (png/jpg/gif/webp...)" style="flex:1; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); outline:none; font-size:14px; background:#0c0d0f; color:#fff;">
+        <button id="imageUrlSend" style="padding:8px 10px; border-radius:8px; border:none; background:#2f855a; color:white; cursor:pointer; font-size:14px;">Send</button>
+        <button id="imageUploadBtn" style="padding:8px 10px; border-radius:8px; border:none; background:#2b6cb0; color:white; cursor:pointer; font-size:14px;">Upload</button>
+        <button id="imageUrlCancel" style="padding:8px 10px; border-radius:8px; border:none; background:#555; color:white; cursor:pointer; font-size:14px;">Cancel</button>
+      </div>
+
+      <div style="padding:12px; background:#0f1113; display:flex; gap:8px; align-items:center; border-top:1px solid rgba(255,255,255,0.02);">
+        <button id="imageBtn" title="Add image" style="padding:8px 10px; border-radius:10px; border:none; background:#2b6cb0; color:white; cursor:pointer; font-size:16px;">🖼️</button>
+        <input id="chatInput" style="flex:1; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); outline:none; font-size:15px; background:#0c0d0f; color:#fff;" placeholder="Type a message...">
+        <button id="chatSend" style="padding:10px 14px; border-radius:10px; border:none; background:#2f855a; color:white; cursor:pointer; font-size:15px;">Send</button>
       </div>
     `;
 
@@ -635,34 +664,36 @@
     const imageUploadBtn = box.querySelector("#imageUploadBtn");
     const imageUrlCancel = box.querySelector("#imageUrlCancel");
     const openRoomsBtn = box.querySelector("#openRoomsBtn");
+    const openExploreBtn = box.querySelector("#openExploreBtn");
     const currentRoomDisplay = box.querySelector("#currentRoomDisplay");
 
-    // New: rooms overlay + password modal elements
+    // Rooms overlay + password modal elements
     const overlay = document.createElement("div");
     overlay.id = "roomOverlay";
     Object.assign(overlay.style, {
       position: "absolute",
-      left: "0",
-      top: "0",
-      right: "0",
-      bottom: "0",
-      background: "rgba(0,0,0,0.55)",
-      zIndex: 20,
+      left: "6px",
+      top: "64px",
+      right: "6px",
+      bottom: "72px",
+      background: "rgba(12,13,15,0.98)",
+      zIndex: 40,
       display: "none",
       alignItems: "center",
       justifyContent: "center",
       padding: "12px",
+      borderRadius: "10px",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+      border: "1px solid rgba(255,255,255,0.03)",
     });
 
     const modal = document.createElement("div");
     Object.assign(modal.style, {
       width: "100%",
-      maxWidth: "360px",
-      maxHeight: "80%",
-      background: "#1e2124",
-      borderRadius: "12px",
-      padding: "12px",
-      boxShadow: "0 8px 30px rgba(0,0,0,0.6)",
+      height: "100%",
+      background: "transparent",
+      borderRadius: "8px",
+      padding: "6px",
       overflow: "auto",
       color: "#fff",
       display: "flex",
@@ -672,16 +703,15 @@
 
     modal.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <strong style="font-size:16px;">Your Rooms</strong>
-        <button id="closeRoomsOverlay" style="background:#999; border:none; padding:6px 8px; border-radius:8px; cursor:pointer;">Close</button>
+        <strong style="font-size:15px;">Your Rooms</strong>
+        <button id="closeRoomsOverlay" style="background:#444; border:none; padding:6px 8px; border-radius:8px; cursor:pointer; color:#fff;">Close</button>
       </div>
-      <div id="roomsList" style="display:flex; flex-direction:column; gap:6px;"></div>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-        <input id="newRoomNameInput" placeholder="New room name" style="flex:1; padding:8px; border-radius:8px; border:none; outline:none; font-size:14px;">
-        <button id="addRoomBtn" style="padding:8px 10px; border-radius:8px; border:none; background:#43b581; color:white; cursor:pointer;">Add</button>
-        <button id="addAndSwitchBtn" style="padding:8px 10px; border-radius:8px; border:none; background:#5865f2; color:white; cursor:pointer;">Add+Switch</button>
+      <div id="roomsList" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;"></div>
+      <div style="display:flex; gap:8px; margin-top:auto;">
+        <input id="newRoomNameInput" placeholder="New room name" style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); outline:none; font-size:14px; background:#0c0d0f; color:#fff;">
+        <button id="addRoomBtn" style="padding:10px 12px; border-radius:10px; border:none; background:#2f855a; color:white; cursor:pointer;">Add</button>
+        <button id="addAndSwitchBtn" style="padding:10px 12px; border-radius:10px; border:none; background:#2b6cb0; color:white; cursor:pointer;">Add+Switch</button>
       </div>
-      <div style="font-size:12px; opacity:0.8; margin-top:6px;">Tip: you can claim a chat (max 3). Claimed chats appear in your library and you control their password.</div>
     `;
     overlay.appendChild(modal);
     box.appendChild(overlay);
@@ -695,25 +725,26 @@
     // Password modal (reusable)
     const passwordModal = document.createElement("div");
     Object.assign(passwordModal.style, {
-      background: "#23272a",
+      background: "#111214",
       padding: "12px",
       borderRadius: "10px",
       display: "none",
       flexDirection: "column",
       gap: "8px",
       color: "#fff",
+      border: "1px solid rgba(255,255,255,0.03)"
     });
     passwordModal.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <strong id="pwdModalTitle">Enter password</strong>
-        <button id="pwdModalClose" style="background:#999; border:none; padding:6px 8px; border-radius:8px; cursor:pointer;">X</button>
+        <button id="pwdModalClose" style="background:#444; border:none; padding:6px 8px; border-radius:8px; cursor:pointer; color:#fff;">X</button>
       </div>
       <div style="display:flex; flex-direction:column; gap:6px;">
-        <input id="pwdInput" type="password" placeholder="Password" style="padding:8px; border-radius:8px; border:none; outline:none; font-size:14px;">
+        <input id="pwdInput" type="password" placeholder="Password" style="padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); outline:none; font-size:14px; background:#0c0d0f; color:#fff;">
         <label style="font-size:13px; display:flex; gap:8px; align-items:center;"><input id="pwdRemember" type="checkbox"> Save to account</label>
         <div style="display:flex; gap:8px;">
-          <button id="pwdSubmit" style="flex:1; padding:8px; border-radius:8px; border:none; background:#43b581; color:white; cursor:pointer;">Submit</button>
-          <button id="pwdCancel" style="flex:1; padding:8px; border-radius:8px; border:none; background:#999; color:white; cursor:pointer;">Cancel</button>
+          <button id="pwdSubmit" style="flex:1; padding:8px; border-radius:8px; border:none; background:#2f855a; color:white; cursor:pointer;">Submit</button>
+          <button id="pwdCancel" style="flex:1; padding:8px; border-radius:8px; border:none; background:#555; color:white; cursor:pointer;">Cancel</button>
         </div>
       </div>
     `;
@@ -758,7 +789,7 @@
       });
     }
 
-    // Rooms list rendering uses caches: userRoomPasswords & claimedChatsMap
+    // Rooms overlay rendering
     function renderRoomsList() {
       roomsListEl.innerHTML = "";
       const rooms = loadRoomsList();
@@ -779,18 +810,16 @@
         left.style.gap = "8px";
         left.style.alignItems = "center";
 
-        // Lock icon if we have a password for this room (either session or account)
         const hasPwd = (sessionRoomPasswords[r] && sessionRoomPasswords[r].length) || (userRoomPasswords[r] && userRoomPasswords[r].length);
         const lock = document.createElement("div");
         lock.textContent = hasPwd ? "🔒" : "🔓";
         lock.title = hasPwd ? "Has saved password" : "No saved password";
         left.appendChild(lock);
 
-        // name / switch button
         const btn = document.createElement("button");
         btn.textContent = r;
         btn.title = `Switch to ${r}`;
-        Object.assign(btn.style, { padding: "8px 10px", borderRadius: "8px", border: "none", background: r === currentRoom ? "#2c8f6e" : "#2b2f33", color: "#fff", cursor: "pointer", fontSize: "14px" });
+        Object.assign(btn.style, { padding: "8px 10px", borderRadius: "8px", border: "none", background: r === currentRoom ? "#25393a" : "#131415", color: "#fff", cursor: "pointer", fontSize: "14px" });
         btn.onclick = async () => {
           await switchRoom(r);
           hideRoomsOverlay();
@@ -799,7 +828,6 @@
 
         row.appendChild(left);
 
-        // actions: claim/manage/remove
         const actions = document.createElement("div");
         actions.style.display = "flex";
         actions.style.gap = "6px";
@@ -807,33 +835,27 @@
 
         const claimedInfo = claimedChatsMap[r];
         if (!claimedInfo || !claimedInfo.claimed_by) {
-          // not claimed: show "Claim" button
           const claimBtn = document.createElement("button");
           claimBtn.textContent = "Claim";
-          Object.assign(claimBtn.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#2b7a45", color: "#fff", cursor: "pointer", fontSize: "12px" });
+          Object.assign(claimBtn.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#2f855a", color: "#fff", cursor: "pointer", fontSize: "12px" });
           claimBtn.onclick = async () => {
             const ans = await promptPasswordForRoom(r, "claim");
             if (!ans || !ans.password) return alert("Claim canceled (no password)");
-            // attempt claim
             const res = await postClaimChat(token, r, ans.password);
             if (!res || !res.success) {
               alert("Claim failed: " + (res && res.error ? res.error : "unknown"));
               return;
             }
-            // refresh caches and attempt to mint a proof
             userRoomPasswords = await fetchUserRoomPasswords(token);
             claimedChatsMap = await fetchClaimedChats();
             renderRoomsList();
-            // try to get a proof so user can immediately use the room
             const proof = await fetchRoomProof(token, r);
             if (proof) alert(`Chat "${r}" claimed successfully and proof minted.`); else alert(`Chat "${r}" claimed. Proof minting failed; try switching into the room to trigger proof generation.`);
           };
           actions.appendChild(claimBtn);
         } else {
-          // claimed by someone
           const owner = claimedInfo.claimed_by;
           if (owner === username) {
-            // manage: change password, unclaim
             const manageBtn = document.createElement("button");
             manageBtn.textContent = "Manage";
             Object.assign(manageBtn.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#5865f2", color: "#fff", cursor: "pointer", fontSize: "12px" });
@@ -842,7 +864,7 @@
               Object.assign(menu.style, { position: "absolute", background: "#111", padding: "8px", borderRadius: "8px", right: "20px", zIndex: 99999, display: "flex", gap: "6px" });
               const change = document.createElement("button");
               change.textContent = "Change pwd";
-              Object.assign(change.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#2b7a45", color: "#fff", cursor: "pointer", fontSize: "12px" });
+              Object.assign(change.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#2f855a", color: "#fff", cursor: "pointer", fontSize: "12px" });
               const unclaim = document.createElement("button");
               unclaim.textContent = "Unclaim";
               Object.assign(unclaim.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#a33", color: "#fff", cursor: "pointer", fontSize: "12px" });
@@ -862,7 +884,6 @@
                 renderRoomsList();
                 cleanupMenu();
                 alert("Password updated");
-                // refresh proof
                 await fetchRoomProof(token, r);
               };
 
@@ -874,7 +895,6 @@
                 renderRoomsList();
                 cleanupMenu();
                 alert("Unclaimed");
-                // clear proof and related caches
                 delete roomProofs[r];
               };
             };
@@ -889,7 +909,6 @@
           }
         }
 
-        // remove from library button
         const del = document.createElement("button");
         del.textContent = "Remove";
         Object.assign(del.style, { padding: "6px 8px", borderRadius: "8px", border: "none", background: "#666", color: "#fff", cursor: "pointer", fontSize: "12px" });
@@ -909,6 +928,9 @@
     function showRoomsOverlay() {
       renderRoomsList();
       overlay.style.display = "flex";
+      // ensure explore panel removed if present
+      const ex = box.querySelector("#explorePanel");
+      if (ex) ex.remove();
       setTimeout(() => {
         try { newRoomNameInput.focus(); } catch (e) {}
       }, 50);
@@ -917,7 +939,8 @@
 
     openRoomsBtn.addEventListener("click", () => showRoomsOverlay());
     closeRoomsOverlayBtn.addEventListener("click", () => hideRoomsOverlay());
-    overlay.addEventListener("click", (ev) => { if (ev.target === overlay) hideRoomsOverlay(); });
+    // do not close overlay on generic clicks to avoid the bug
+    overlay.addEventListener("click", (ev) => { /* no-op: avoid accidental close */ });
 
     addRoomBtn.addEventListener("click", () => {
       const name = (newRoomNameInput.value || "").trim();
@@ -937,6 +960,282 @@
       hideRoomsOverlay();
     });
 
+    // Explore overlay: always recreate to avoid stale state and add Back button
+    function hideExploreOverlay() {
+      const ex = box.querySelector("#explorePanel");
+      if (ex) ex.remove();
+    }
+
+    async function showExploreOverlay() {
+      try {
+        // remove any existing explore panel so we always start fresh
+        const existing = box.querySelector("#explorePanel");
+        if (existing) existing.remove();
+
+        const ex = document.createElement("div");
+        ex.id = "explorePanel";
+        Object.assign(ex.style, {
+          position: "absolute",
+          left: "6px",
+          top: "64px",
+          right: "6px",
+          bottom: "72px",
+          zIndex: 50,
+          display: "flex",
+          alignItems: "stretch",
+          justifyContent: "center",
+        });
+
+        const panel = document.createElement("div");
+        Object.assign(panel.style, {
+          width: "100%",
+          height: "100%",
+          background: "linear-gradient(180deg,#0b0c0e,#111214)",
+          borderRadius: "10px",
+          padding: "12px",
+          boxShadow: "0 18px 40px rgba(0,0,0,0.7)",
+          border: "1px solid rgba(255,255,255,0.03)",
+          color: "#e6eefc",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          overflow: "hidden"
+        });
+
+        panel.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; flex-direction:column;">
+              <div style="font-size:16px; font-weight:700;">Explore</div>
+              <div style="font-size:12px; color:#9fb0e6; opacity:0.85;">Popular and recently active chats</div>
+            </div>
+            <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+              <input id="exploreSearch" placeholder="Search rooms..." style="padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:#0c0d0f; color:#fff; outline:none;">
+              <select id="exploreSort" style="padding:8px; border-radius:8px; background:#0c0d0f; color:#fff; border:1px solid rgba(255,255,255,0.04);">
+                <option value="last_activity">Recent</option>
+                <option value="message_count">Most messages</option>
+              </select>
+              <button id="exploreBack" style="background:#666; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; color:#fff;">Back</button>
+              <button id="closeExplore" style="background:#444; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; color:#fff;">Close</button>
+            </div>
+          </div>
+          <div id="exploreList" style="flex:1; overflow:auto; display:flex; flex-direction:column; gap:8px; padding-right:6px;"></div>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button id="refreshExplore" style="padding:8px 12px; border-radius:8px; border:none; background:#2f855a; color:white; cursor:pointer;">Refresh</button>
+          </div>
+        `;
+
+        ex.appendChild(panel);
+        box.appendChild(ex);
+        registerEl(ex);
+
+        const closeBtn = panel.querySelector("#closeExplore");
+        const backBtn = panel.querySelector("#exploreBack");
+        const refreshBtn = panel.querySelector("#refreshExplore");
+        const searchInput = panel.querySelector("#exploreSearch");
+        const sortSelect = panel.querySelector("#exploreSort");
+        const listEl = panel.querySelector("#exploreList");
+
+        // Pagination & search state
+        let pageSize = 30;
+        let currentLimit = pageSize;
+        let isLoading = false;
+        let exhausted = false;
+        let lastQuery = "";
+        let lastSort = sortSelect.value || "last_activity";
+        let debounceTimer = null;
+
+        // Load and render using progressive-limit strategy:
+        // we request server with currentLimit and render results. When user scrolls near bottom,
+        // increase currentLimit and re-fetch. We also apply client-side filter as a fallback if server doesn't support q.
+        async function loadAndRender(reset = false) {
+          if (isLoading) return;
+          isLoading = true;
+          if (reset) {
+            currentLimit = pageSize;
+            exhausted = false;
+            listEl.innerHTML = `<div style="opacity:0.85; padding:8px;">Loading...</div>`;
+          } else {
+            // show inline spinner at bottom
+            const s = panel.querySelector("#exploreLoading");
+            if (!s) {
+              const spinner = document.createElement("div");
+              spinner.id = "exploreLoading";
+              spinner.style.opacity = "0.85";
+              spinner.style.padding = "8px";
+              spinner.textContent = "Loading more...";
+              listEl.appendChild(spinner);
+            }
+          }
+
+          const sort = sortSelect.value || "last_activity";
+          const q = (searchInput.value || "").trim();
+          lastSort = sort;
+          lastQuery = q;
+
+          try {
+            const rooms = await fetchExplore(currentLimit, sort, q);
+            // If server doesn't support q, fallback to client-side filtering:
+            let filtered = rooms;
+            if (q) {
+              const qlc = q.toLowerCase();
+              filtered = rooms.filter(r => String(r.room || "").toLowerCase().includes(qlc));
+            }
+
+            // If returned count is less than the requested limit, mark exhausted.
+            if ((filtered.length || 0) < currentLimit) exhausted = true;
+
+            // render
+            listEl.innerHTML = "";
+            if (!filtered.length) {
+              listEl.innerHTML = `<div style="opacity:0.75; padding:8px;">No rooms found.</div>`;
+              isLoading = false;
+              return;
+            }
+
+            for (const r of filtered) {
+              const card = document.createElement("div");
+              Object.assign(card.style, {
+                display: "flex",
+                gap: "10px",
+                alignItems: "center",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
+                border: "1px solid rgba(255,255,255,0.02)",
+              });
+
+              const left = document.createElement("div");
+              left.style.display = "flex";
+              left.style.flexDirection = "column";
+              left.style.minWidth = "0";
+              left.innerHTML = `
+                <div style="font-weight:700; font-size:14px; color:#e6eefc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.room)}</div>
+                <div style="font-size:12px; color:#9fb0e6; opacity:0.9;">${(r.message_count||0)} messages • ${r.last_activity ? timeAgoShort(new Date(Number(r.last_activity))) : "no activity"}</div>
+              `;
+              card.appendChild(left);
+
+              const meta = document.createElement("div");
+              meta.style.display = "flex";
+              meta.style.flexDirection = "column";
+              meta.style.alignItems = "flex-end";
+              meta.style.gap = "6px";
+
+              const claimedBy = claimedChatsMap[r.room] && claimedChatsMap[r.room].claimed_by ? claimedChatsMap[r.room].claimed_by : null;
+              if (claimedBy) {
+                const badge = document.createElement("div");
+                badge.textContent = `claimed by ${claimedBy}`;
+                badge.style.fontSize = "12px";
+                badge.style.color = "#fff";
+                badge.style.background = "rgba(255,255,255,0.04)";
+                badge.style.padding = "4px 8px";
+                badge.style.borderRadius = "999px";
+                meta.appendChild(badge);
+              } else {
+                const badge = document.createElement("div");
+                badge.textContent = `open`;
+                badge.style.fontSize = "12px";
+                badge.style.color = "#fff";
+                badge.style.background = "rgba(0,0,0,0.14)";
+                badge.style.padding = "4px 8px";
+                badge.style.borderRadius = "999px";
+                meta.appendChild(badge);
+              }
+
+              const joinBtn = document.createElement("button");
+              joinBtn.textContent = "Join";
+              Object.assign(joinBtn.style, {
+                padding: "8px 10px",
+                borderRadius: "8px",
+                border: "none",
+                background: "#2b6cb0",
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: "13px"
+              });
+              joinBtn.addEventListener("click", async () => {
+                addRoomToList(r.room);
+                try { await box.switchRoom ? box.switchRoom(r.room) : (async () => {})(); } catch (e) {}
+                const p = box.querySelector("#explorePanel"); if (p) p.remove();
+              });
+              meta.appendChild(joinBtn);
+              card.appendChild(meta);
+
+              listEl.appendChild(card);
+            }
+
+            // if not exhausted, add a sentinel loader element for infinite scroll
+            if (!exhausted) {
+              const sentinel = document.createElement("div");
+              sentinel.id = "exploreSentinel";
+              sentinel.style.padding = "8px";
+              sentinel.style.opacity = "0.8";
+              sentinel.textContent = "Scroll to load more...";
+              listEl.appendChild(sentinel);
+            }
+          } catch (err) {
+            console.error("loadAndRender error", err);
+            listEl.innerHTML = `<div style="opacity:0.85; padding:8px;">Could not load explore data</div>`;
+          }
+          isLoading = false;
+        }
+
+        // Scroll-to-load handler (increases currentLimit progressively)
+        let scrollHandlerAttached = false;
+        function attachScrollHandler() {
+          if (scrollHandlerAttached) return;
+          scrollHandlerAttached = true;
+          let onScroll = () => {
+            try {
+              if (isLoading || exhausted) return;
+              const scrollPos = listEl.scrollTop + listEl.clientHeight;
+              const threshold = listEl.scrollHeight - 120; // 120px from bottom
+              if (scrollPos >= threshold) {
+                // increase limit and re-fetch
+                currentLimit += pageSize;
+                loadAndRender(false);
+              }
+            } catch (e) {
+              console.error("explore onScroll error", e);
+            }
+          };
+          listEl.addEventListener("scroll", onScroll);
+        }
+
+        // Debounced search: reset pagination and load
+        function onSearchInput() {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            currentLimit = pageSize;
+            exhausted = false;
+            loadAndRender(true);
+          }, 300);
+        }
+
+        // wire up controls
+        closeBtn.addEventListener("click", () => { const p = box.querySelector("#explorePanel"); if (p) p.remove(); });
+        backBtn.addEventListener("click", () => { const p = box.querySelector("#explorePanel"); if (p) p.remove(); showRoomsOverlay(); });
+        refreshBtn.addEventListener("click", () => { currentLimit = pageSize; exhausted = false; loadAndRender(true); });
+        searchInput.addEventListener("input", onSearchInput);
+        sortSelect.addEventListener("change", () => { currentLimit = pageSize; exhausted = false; loadAndRender(true); });
+
+        // initial load
+        await loadAndRender(true);
+        attachScrollHandler();
+
+      } catch (err) {
+        console.error("showExploreOverlay error:", err);
+        alert("Could not open Explore (see console for details).");
+      }
+    }
+
+    // Wire Explore button defensively
+    if (openExploreBtn) {
+      openExploreBtn.addEventListener("click", () => {
+        try { showExploreOverlay(); }
+        catch (e) { console.error("openExploreBtn click error", e); alert("Could not open Explore (see console)"); }
+      });
+    }
+
     // ---------- chat controller factory (uses proof) ----------
     function getRoomPassword(room) {
       if (sessionRoomPasswords[room]) return sessionRoomPasswords[room];
@@ -954,28 +1253,22 @@
         lastMessages: [],
         async getMessages() {
           const url = `${CHAT_BASE}/room/${encodeURIComponent(currentRoom)}/messages`;
-          // try to get a short-lived proof first (preferred, cheap for DO)
           let proof = await fetchRoomProof(token, currentRoom);
-          // if no proof, we may still attempt with Authorization/token or prompt then retry
           const headers = {};
           if (token) headers.Authorization = token;
           if (proof) headers["X-Room-Auth"] = proof;
-          // If user has saved password or session password, include it as X-Room-Password only if proof flow fails later.
           const pwd = getRoomPassword(currentRoom);
-          if (pwd) headers["X-Room-Password"] = pwd; // optional; DO may not need it if proof valid
+          if (pwd) headers["X-Room-Password"] = pwd;
           const res = await fetchWithTimeout(url, { headers }, 8000);
           if (res.status === 401 || res.status === 403) {
-            // try to recover: prompt for password and save if requested, then mint proof and retry once
             const ans = await promptPasswordForRoom(currentRoom, "access");
             if (!ans || !ans.password) throw new Error("Auth required");
-            // save choice
             if (ans.remember) {
               const saved = await postSaveRoomPassword(token, currentRoom, ans.password);
               if (saved) userRoomPasswords[currentRoom] = ans.password;
             } else {
               sessionRoomPasswords[currentRoom] = ans.password;
             }
-            // clear any stale proof and request a fresh one
             delete roomProofs[currentRoom];
             const proof2 = await fetchRoomProof(token, currentRoom);
             const headers2 = {};
@@ -1095,7 +1388,7 @@
       } catch (e) { console.debug("Send message error:", e); alert("Send failed: " + (e && e.message ? e.message : "unknown")); }
     }
 
-    // Image UI (unchanged)
+    // Image UI
     imageBtn.addEventListener("click", () => {
       if (imageInputRow.style.display === "none" || imageInputRow.style.display === "") {
         imageInputRow.style.display = "flex";
@@ -1218,7 +1511,7 @@
         top: Math.max(8, rect.top + 8) + "px",
         width: "56px",
         height: "56px",
-        background: "#7289da",
+        background: "#2b6cb0",
         color: "#fff",
         borderRadius: "28px",
         display: "flex",
@@ -1281,7 +1574,7 @@
       bottom: "12px",
       padding: "6px 10px",
       borderRadius: "12px",
-      background: "#43b581",
+      background: "#2f855a",
       color: "#fff",
       border: "none",
       display: "none",
@@ -1381,6 +1674,11 @@
       console.debug("Failed to save key to account:", e);
       return false;
     }
+  }
+
+  // small utility
+  function escapeHtml(str) {
+    return String(str || "").replace(/[&<>"']/g, (s) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" })[s]);
   }
 
   // End top-level IIFE
